@@ -142,10 +142,10 @@ def comps():
 def competitions_json():
 	if not utils.is_admin():
 		if not utils.ctftime():
-				if utils.view_after_ctf():
-					pass
-				else:
-					abort(403)
+			if utils.view_after_ctf():
+				pass
+			else:
+				abort(403)
 	if utils.user_can_view_challenges() and (utils.ctf_started() or utils.is_admin()):
 		competitions = Competitions.query.all()
 		json = {'competitions': []}
@@ -175,10 +175,10 @@ def admin_competitions():
 def comp_chals(compid):
 	if not utils.is_admin():
 		if not utils.ctftime():
-				if utils.view_after_ctf():
-					pass
-				else:
-					abort(403)
+			if utils.view_after_ctf():
+				pass
+			else:
+				abort(403)
 	if utils.get_config('verify_emails'):
 		if utils.authed():
 			if utils.is_admin() is False and utils.is_verified() is False:  # User is not confirmed
@@ -199,10 +199,10 @@ def comp_chals(compid):
 def challenges_view(compid):
 	if not utils.is_admin():
 		if not utils.ctftime():
-				if utils.view_after_ctf():
-					pass
-				else:
-					abort(403)
+			if utils.view_after_ctf():
+				pass
+			else:
+				abort(403)
 	if utils.get_config('verify_emails'):
 		if utils.authed():
 			if utils.is_admin() is False and utils.is_verified() is False:  # User is not confirmed
