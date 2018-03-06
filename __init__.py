@@ -24,6 +24,7 @@ class Competitions(db.Model):
 		description = db.Column(db.Text)
 		startTime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 		endTime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+		profile=db.Column(db.String(50),default='default.jpg')
 		chals=db.relationship('Chalcomp',backref='competition')
 
 		def __init__(self, title, description):
@@ -165,7 +166,8 @@ def competitions_json():
 								'title': x.title,
 								'description': x.description,
 								'startTime':x.startTime,
-								'endTime':x.endTime
+								'endTime':x.endTime,
+								'profile':x.profile
 					})
 			db.session.close()
 			return jsonify(json)
@@ -285,9 +287,11 @@ def add_comp():
 			description = request.form.get('description')
 			startTime = request.form.get('startTime')
 			endTime = request.form.get('endTime')
+			profile=request.form.get('profile')
 			comp = Competitions(title, description)
 			comp.startTime = startTime
 			comp.endTime = endTime
+			comp.profile=profile
 			db.session.add(comp)
 			sb.session.flush()
 			db.session.commit()
@@ -409,4 +413,5 @@ def load(app):
 	register_plugin_assets_directory(
 			app, base_path='/plugins/competitions/assets/')
 	app.register_blueprint(competitions)
+	app.db.create_all()
 	
