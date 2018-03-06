@@ -15,8 +15,6 @@ from CTFd.plugins.challenges import get_chal_class
 import datetime
 
 # 竞赛模型
-
-
 competitions=Blueprint('competitions',__name__,static_folder='assets',template_folder='templates')
 
 
@@ -32,18 +30,8 @@ class Competitions(db.Model):
 			self.title = title
 			self.description = description
 		
-		def started(self):
-			return self.startTime<datetime.datetime.utcnow()
-		
-		def ended(self):
-			return self.startTime>datetime.datetime.utcnow()
-		
-		def during(self):
-			return self.startTime<datetime.datetime.utcnow() and self.endTime>datetime.datetime.utcnow()
 
 # 存放题目与竞赛的对应关系
-
-
 class Chalcomp(db.Model):
 		id = db.Column(db.Integer, primary_key=True)
 		chalid = db.Column(db.Integer,db.ForeignKey('challenges.id'))
