@@ -1,4 +1,4 @@
 {
 	"name":"competitions",
-	"route":"/admin/competitions"
+	"route":"/competitions"
 }

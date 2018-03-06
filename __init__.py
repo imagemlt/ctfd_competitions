@@ -17,7 +17,7 @@ import datetime
 # 竞赛模型
 
 
-
+competitions=Blueprint('competitions',__name__,static_folder='assets',template_folder='templates')
 
 
 class Competitions(db.Model):
@@ -46,8 +46,8 @@ class Competitions(db.Model):
 
 class Chalcomp(db.Model):
 		id = db.Column(db.Integer, primary_key=True)
-		chalid = db.Column(db.Integer,db.ForeignKey('competitions.id'))
-		compid = db.Column(db.Integer,db.ForeignKey('challenges.id'))
+		chalid = db.Column(db.Integer,db.ForeignKey('challenges.id'))
+		compid = db.Column(db.Integer,db.ForeignKey('competitions.id'))
 
 
 
@@ -63,7 +63,7 @@ class Chalcomp(db.Model):
 			
 	
 
-def get_range(comp,admin=False,count=None):
+def get_range(comp,admin=False,count=None,teamid=None):
 	Comp=Competitions.query.filter(Competitions.id==comp).first()
 	if not Comp:
 		return []
@@ -82,22 +82,23 @@ def get_range(comp,admin=False,count=None):
 	"""
 	Filter out solves and awards that are before a specific time point.
 	"""
-	print scores
 	freeze = utils.get_config('freeze')
 	chals=[x.chalid for x in Comp.chals]
 	if not admin and freeze:
-		scores = scores.filter(Solves.date < utils.unix_time_to_utc(freeze) and Solves.date<Comp.endTime)
-		awards = awards.filter(Awards.date < utils.unix_time_to_utc(freeze) and Solves.date<Comp.endTime)
+		scores = scores.filter(Solves.date < utils.unix_time_to_utc(freeze))
+		awards = awards.filter(Awards.date < utils.unix_time_to_utc(freeze))
 	"""
 	Combine awards and solves with a union. They should have the same amount of columns
 	"""
-	print scores
-	scores=scores.filter(Chalcomp.chalid==Comp.id)
+	scores=scores.filter(Chalcomp.compid==Comp.id)
 	scores=scores.filter(Solves.date<Comp.endTime)
 	scores=scores.filter(Solves.date>Comp.startTime)
 	#awards=scores.filter(Solves.chalid in chals)
 	results = union_all(scores, awards).alias('results')
-	print scores
+	print results
+	if(teamid is not None):
+		scores=scores.filter(Solves.teamid==teamid)
+		awards=awards.filter(Solves.teamid==teamid)
 	"""
 	Sum each of the results by the team id to get their score.
 	"""
@@ -133,6 +134,7 @@ def get_range(comp,admin=False,count=None):
 			.join(sumscores, Teams.id == sumscores.columns.teamid) \
 			.filter(Teams.banned == False) \
 			.order_by(sumscores.columns.score.desc(), sumscores.columns.id)
+	#print standings_query
 
 	"""
 	Only select a certain amount of users if asked.
@@ -147,28 +149,21 @@ def get_range(comp,admin=False,count=None):
 
 
 
-def load(app):
-	register_plugin_assets_directory(
-			app, base_path='/plugins/competitions/assets/')
 
-	@app.route('/competitions',methods=['GET'])
-	def competitions():
+@competitions.route('/competitions',methods=['GET'])
+def comps():
 		if not utils.is_admin():
-			print 'isadmin'
 			if not utils.ctftime():
-					print 'ctf_time'
 					if utils.view_after_ctf():
 						pass
 					else:
 						abort(403)
 		return render_template('competitions.html')
 
-	@app.route('/comps', methods=['GET'])
-	def competitions_json():
+@competitions.route('/comps', methods=['GET'])
+def competitions_json():
 		if not utils.is_admin():
-			print 'isadmin'
 			if not utils.ctftime():
-					print 'ctf_time'
 					if utils.view_after_ctf():
 						pass
 					else:
@@ -192,17 +187,15 @@ def load(app):
 					
 
 
-	@app.route('/admin/competitions', methods=['GET'])
-	@admins_only
-	def admin_competitions():
+@competitions.route('/admin/competitions', methods=['GET'])
+@admins_only
+def admin_competitions():
 		return render_template('admin_competitions.html')
 
-	@app.route('/admin/competitions/<compid>',methods=['GET'])
-	def comp_chals(compid):
+@competitions.route('/admin/competitions/<compid>',methods=['GET'])
+def comp_chals(compid):
 		if not utils.is_admin():
-			print 'isadmin'
 			if not utils.ctftime():
-					print 'ctf_time'
 					if utils.view_after_ctf():
 						pass
 					else:
@@ -224,12 +217,10 @@ def load(app):
 
 
 
-	@app.route('/challenges/comp/<compid>', methods=['GET'])
-	def challenges_view(compid):
+@competitions.route('/challenges/comp/<compid>', methods=['GET'])
+def challenges_view(compid):
 		if not utils.is_admin():
-			print 'isadmin'
 			if not utils.ctftime():
-					print 'ctf_time'
 					if utils.view_after_ctf():
 						pass
 					else:
@@ -245,7 +236,7 @@ def load(app):
 				abort(403)
 			if not comp.started():
 				abort(403)
-			chals=comp.chals
+			#chals=comp.chals
 			json = {
 					'competition':{
 						'id':comp.id,
@@ -256,7 +247,7 @@ def load(app):
 					},
 					'game':[]
 				}
-			for x in chals:
+			for x in comp.chals:
 				chal=Challenges.query.filter(Challenges.id==x.chalid).first()
 				if chal is None:
 					abort(502)
@@ -292,15 +283,15 @@ def load(app):
 	
 	
 
-	@app.route('/addComp', methods=['GET'])
-	@admins_only
-	def addComp():
+@competitions.route('/addComp', methods=['GET'])
+@admins_only
+def addComp():
 		if request.method == 'GET':
 			return render_template('newComptition.html')
 		
-	@app.route('/admin/addComp',methods=['POST'])
-	@admins_only
-	def add_comp():
+@competitions.route('/admin/addComp',methods=['POST'])
+@admins_only
+def add_comp():
 		if request.method == 'POST':
 			title = request.form.get('title')
 			description = request.form.get('description')
@@ -314,12 +305,26 @@ def load(app):
 			db.session.commit()
 			return redirect('/admin/competitions')
 	
-	@app.route('/session',methods=['GET'])
-	def sessions():
+@competitions.route('/session',methods=['GET'])
+def sessions():
 		return 'err'
 
-	@app.route('/competitions/<int:compid>/scoreboard/<int:count>')
-	def topteams(compid,count):
+@competitions.route('/competitions/<int:compid>/scores')
+def scores(compid):
+	json = {'standings': []}
+	if utils.get_config('view_scoreboard_if_authed') and not utils.authed():
+		return redirect(url_for('auth.login', next=request.path))
+	if utils.hide_scores():
+		return jsonify(json)
+
+	standings = get_range(comp=compid)
+
+	for i, x in enumerate(standings):
+		json['standings'].append({'pos': i + 1, 'id': x.teamid, 'team': x.name, 'score': int(x.score)})
+	return jsonify(json)
+
+@competitions.route('/competitions/<int:compid>/top/<int:count>')
+def topteams(compid,count):
 		json = {'places': {}}
 		if utils.get_config('view_scoreboard_if_authed') and not utils.authed():
 			return redirect(url_for('auth.login', next=request.path))
@@ -371,5 +376,49 @@ def load(app):
 
 		return jsonify(json)
 		
+@competitions.route('/competitions/<int:compid>/solves/<int:teamid>')
+def team_solves(compid,teamid):
+	json={'solves':[]}
+	if utils.get_config('view_scoreboard_if_authed') and not utils.authed():
+		return redirect(url_for('auth.login', next=request.path))
+	if utils.hide_scores():
+		return jsonify(json)
 
-	app.db.create_all()
+	chalids=[chal.chalid for chal in Chalcomp.query.filter(Chalcomp.compid==compid)]
+	solves = Solves.query.filter(Solves.teamid==teamid)
+	awards = Awards.query.filter(Awards.teamid==teamid)
+	solves=solves.filter(Solves.chalid in (chalids))
+	freeze = utils.get_config('freeze')
+
+	if freeze:
+		solves = solves.filter(Solves.date < utils.unix_time_to_utc(freeze))
+		awards = awards.filter(Awards.date < utils.unix_time_to_utc(freeze))
+
+	solves = solves.all()
+	awards = awards.all()
+
+	for solve in solves:
+		json['solves'].append({
+				'chal': solve.chalid,
+				'team': solve.teamid,
+				'value': solve.chal.value,
+				'time': utils.unix_time(solve.date)
+			})
+	for award in awards:
+			json['solves'].append({
+				'chal': None,
+				'team': award.teamid,
+				'value': award.value,
+				'time': utils.unix_time(award.date)
+			})
+	json['solves'] = sorted(json['solves'], key=lambda k: k['time'])
+	return jsonify(json)
+
+
+
+
+def load(app):
+	register_plugin_assets_directory(
+			app, base_path='/plugins/competitions/assets/')
+	app.register_blueprint(competitions)
+	
