@@ -127,15 +127,23 @@ def get_range(comp, admin=False, count=None, teamid=None):
 	return standings
 
 
-@competitions.route('/competitions', methods=['GET'])
-def comps():
+@competitions.route('/competitions', defaults={'compid':None})
+@competitions.route('/competitions/<int:compid>')
+def comps(compid):
 	if not utils.is_admin():
 		if not utils.ctftime():
 			if utils.view_after_ctf():
 				pass
 			else:
 				abort(403)
-	return render_template('competitions.html')
+	if compid is None:
+		return render_template('competitions.html')
+	else:
+		comp=Competitions.query.filter(Competitions.id==compid).one()
+		if comp:
+			return render_template('comp.html',comp=comp)
+		else:
+			abort(403)
 
 
 @competitions.route('/comps', methods=['GET'])
@@ -188,11 +196,9 @@ def comp_chals(compid):
 		comp = Competitions.query.filter(Competitions.id == compid).first()
 		if comp is None:
 				abort(403)
-	comp = Competitions.query.filter(Competitions.id == compid).one()
-	if comp:
 		return render_template('competition.html', competition=comp)
 	else:
-		abort(404)
+		abort(403)
 
 
 @competitions.route('/challenges/comp/<compid>', methods=['GET'])
@@ -283,11 +289,6 @@ def add_comp():
 		sb.session.flush()
 		db.session.commit()
 		return redirect('/admin/competitions')
-
-
-@competitions.route('/session', methods=['GET'])
-def sessions():
-	return 'err'
 
 
 @competitions.route('/competitions/<int:compid>/scores')
