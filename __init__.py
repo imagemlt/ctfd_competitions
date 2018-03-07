@@ -154,23 +154,20 @@ def competitions_json():
 				pass
 			else:
 				abort(403)
-	if utils.user_can_view_challenges() and (utils.ctf_started() or utils.is_admin()):
-		competitions = Competitions.query.all()
-		json = {'competitions': []}
-		for x in competitions:
-			json['competitions'].append({
-                'id': x.id,
-                'title': x.title,
-            	'description': x.description,
-                'startTime': x.startTime,
-                'endTime': x.endTime,
-                'profile': x.profile
+	competitions = Competitions.query.all()
+	json = {'competitions': []}
+	for x in competitions:
+		json['competitions'].append({
+			'id': x.id,
+			'title': x.title,
+			'description': x.description,
+			'startTime': x.startTime,
+			'endTime': x.endTime,
+			'profile': x.profile
 			})
-		db.session.close()
-		return jsonify(json)
-	else:
-		db.session.close()
-		abort(403)
+	db.session.close()
+	return jsonify(json)
+
 
 
 @competitions.route('/admin/competitions', methods=['GET'])
@@ -321,8 +318,10 @@ def topteams(compid, count):
 	standings = get_range(comp=compid, count=count)
 
 	team_ids = [team.teamid for team in standings]
-
+	chalids = [chal.chalid for chal in Chalcomp.query.filter(
+        Chalcomp.compid == compid)]
 	solves = Solves.query.filter(Solves.teamid.in_(team_ids))
+	solves = Solves.query.filter(Solves.chalid.in_(chalids))
 	awards = Awards.query.filter(Awards.teamid.in_(team_ids))
 
 	freeze = utils.get_config('freeze')
@@ -360,6 +359,21 @@ def topteams(compid, count):
 	return jsonify(json)
 
 
+@competitions.route('/competitions/<int:compid>/scoreboard')
+def comp_scoreboard(compid):
+	if utils.get_config('view_scoreboard_if_authed') and not utils.authed():
+		return redirect(url_for('auth.login', next=request.path))
+	if utils.hide_scores():
+		print 'error!'
+		return render_template('compet_scoreboard.html', errors=['Scores are currently hidden'])
+	comp=Competitions.query.filter(Competitions.id==compid).first()
+	if comp is None:
+		abort(404)
+	standings = get_range(comp=compid)
+	return render_template('compet_scoreboard.html', teams=standings, score_frozen=utils.is_scoreboard_frozen(),comp=comp)
+
+
+
 @competitions.route('/competitions/<int:compid>/solves/<int:teamid>')
 def team_solves(compid, teamid):
 	json = {'solves': []}
@@ -372,7 +386,7 @@ def team_solves(compid, teamid):
             Chalcomp.compid == compid)]
 	solves = Solves.query.filter(Solves.teamid == teamid)
 	awards = Awards.query.filter(Awards.teamid == teamid)
-	solves = solves.filter(Solves.chalid in (chalids))
+	solves = solves.filter(Solves.chalid.in_(chalids))
 	freeze = utils.get_config('freeze')
 
 	if freeze:
