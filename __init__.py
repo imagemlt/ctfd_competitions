@@ -165,6 +165,8 @@ def competitions_json():
 			'endTime': x.endTime,
 			'profile': x.profile
 			})
+	json['competitions'] = sorted(json['competitions'], key=lambda k: k['startTime'])
+	json['competitions'].reverse()
 	db.session.close()
 	return jsonify(json)
 
