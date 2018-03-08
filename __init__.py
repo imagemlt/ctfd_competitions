@@ -16,7 +16,7 @@ import datetime
 
 
 competitions = Blueprint('competitions', __name__,
-                         static_folder='assets', template_folder='templates')
+						 static_folder='assets', template_folder='templates')
 
 #竞赛模型
 class Competitions(db.Model):
@@ -177,31 +177,80 @@ def competitions_json():
 def admin_competitions():
 		return render_template('admin_competitions.html')
 
-
-@competitions.route('/admin/competitions/<compid>', methods=['GET'])
-def comp_chals(compid):
-	if not utils.is_admin():
+@competitions.route('/competitions/<int:compid>/challenges', methods=['GET'])
+def challenges_view(compid):
+	infos = []
+	errors = []
+	start = utils.get_config('start') or 0
+	end = utils.get_config('end') or 0
+	comp=Competitions.query.filter(Competitions.id==compid).first()
+	
+	if utils.ctf_paused():
+		infos.append('{} is paused'.format(utils.ctf_name()))
+	if not utils.is_admin():  # User is not an admin
 		if not utils.ctftime():
-			if utils.view_after_ctf():
+			# It is not CTF time
+			if utils.view_after_ctf():  # But we are allowed to view after the CTF ends
 				pass
-			else:
-				abort(403)
+			else:  # We are NOT allowed to view after the CTF ends
+				if utils.get_config('start') and not utils.ctf_started():
+					errors.append('{} has not started yet'.format(utils.ctf_name()))
+				if (utils.get_config('end') and utils.ctf_ended()) and not utils.view_after_ctf():
+					errors.append('{} has ended'.format(utils.ctf_name()))
+				if comp is None:
+					errors.append('no such competition')
+					start=False
+				if comp.startTime>datetime.datetime.utcnow():
+					errors=append('{} 尚未开始，敬请期待'.format(comp.titile))
+					start=False
+				return render_template('comp_challenges.html', infos=infos, errors=errors, start=int(start), end=int(end),comp=comp)
+
 	if utils.get_config('verify_emails'):
 		if utils.authed():
 			if utils.is_admin() is False and utils.is_verified() is False:  # User is not confirmed
-				abort(403)
-	if utils.user_can_view_challenges() and (utils.ctf_started() or utils.is_admin()):
-		teamid = session.get('id')
-		comp = Competitions.query.filter(Competitions.id == compid).first()
+				return redirect(url_for('auth.confirm_user'))
+
+	if utils.user_can_view_challenges():  # Do we allow unauthenticated users?
+		if utils.get_config('start') and not utils.ctf_started():
+			errors.append('{} has not started yet'.format(utils.ctf_name()))
+		if (utils.get_config('end') and utils.ctf_ended()) and not utils.view_after_ctf():
+			errors.append('{} has ended'.format(utils.ctf_name()))
 		if comp is None:
-				abort(403)
-		return render_template('competition.html', competition=comp)
+			errors.append('no such competition')
+			start=False
+		if comp.startTime>datetime.datetime.utcnow():
+			errors.append('{} 尚未开始，敬请期待'.format(comp.titile))
+			start=False
+		return render_template('comp_challenges.html', infos=infos, errors=errors, start=int(start), end=int(end),comp=comp)
 	else:
-		abort(403)
+		return redirect(url_for('auth.login', next='challenges'))
+
+#@competitions.route('/competitions/<compid>', methods=['GET'])
+#def comp_chals(compid):
+#	if not utils.is_admin():
+#		if not utils.ctftime():
+#			if utils.view_after_ctf():
+#				pass
+#			else:
+#				abort(403)
+#	if utils.get_config('verify_emails'):
+#		if utils.authed():
+#			if utils.is_admin() is False and utils.is_verified() is False:  # User is not confirmed
+#				abort(403)
+#	if utils.user_can_view_challenges() and (utils.ctf_started() or utils.is_admin()):
+#		teamid = session.get('id')
+#		comp = Competitions.query.filter(Competitions.id == compid).first()
+#		if comp is None:
+#			abort(403)
+#		if comp.startTime>datetime.datetime.utcnow():
+#			abort(403)
+#		return render_template('competition.html', competition=comp)
+#	else:
+#		abort(403)
 
 
-@competitions.route('/challenges/comp/<compid>', methods=['GET'])
-def challenges_view(compid):
+@competitions.route('/competitions/<int:compid>/chals', methods=['GET'])
+def comp_challenges(compid):
 	if not utils.is_admin():
 		if not utils.ctftime():
 			if utils.view_after_ctf():
@@ -223,13 +272,13 @@ def challenges_view(compid):
 		json = {
 			'competition': {
 				'id': comp.id,
-                'title': comp.title,
-                'description': comp.description,
-                'startTime': comp.startTime,
-                'endTime': comp.endTime
-                },
-            'game': []
-                }
+				'title': comp.title,
+				'description': comp.description,
+				'startTime': comp.startTime,
+				'endTime': comp.endTime
+				},
+			'game': []
+				}
 		for x in comp.chals:
 			chal = Challenges.query.filter(Challenges.id == x.chalid).first()
 			if chal is None:
@@ -302,7 +351,7 @@ def scores(compid):
 
 	for i, x in enumerate(standings):
 		json['standings'].append(
-                    {'pos': i + 1, 'id': x.teamid, 'team': x.name, 'score': int(x.score)})
+					{'pos': i + 1, 'id': x.teamid, 'team': x.name, 'score': int(x.score)})
 	return jsonify(json)
 
 
@@ -321,7 +370,7 @@ def topteams(compid, count):
 
 	team_ids = [team.teamid for team in standings]
 	chalids = [chal.chalid for chal in Chalcomp.query.filter(
-        Chalcomp.compid == compid)]
+		Chalcomp.compid == compid)]
 	solves = Solves.query.filter(Solves.teamid.in_(team_ids))
 	solves = Solves.query.filter(Solves.chalid.in_(chalids))
 	awards = Awards.query.filter(Awards.teamid.in_(team_ids))
@@ -376,7 +425,7 @@ def comp_scoreboard(compid):
 
 
 
-@competitions.route('/competitions/<int:compid>/solves/<int:teamid>')
+@competitions.route('/competitions/<int:compid>/chalboard/solves/<int:teamid>')
 def team_solves(compid, teamid):
 	json = {'solves': []}
 	if utils.get_config('view_scoreboard_if_authed') and not utils.authed():
@@ -385,7 +434,7 @@ def team_solves(compid, teamid):
 		return jsonify(json)
 
 	chalids = [chal.chalid for chal in Chalcomp.query.filter(
-            Chalcomp.compid == compid)]
+			Chalcomp.compid == compid)]
 	solves = Solves.query.filter(Solves.teamid == teamid)
 	awards = Awards.query.filter(Awards.teamid == teamid)
 	solves = solves.filter(Solves.chalid.in_(chalids))
@@ -400,11 +449,11 @@ def team_solves(compid, teamid):
 
 	for solve in solves:
 		json['solves'].append({
-            'chal': solve.chalid,
-            'team': solve.teamid,
-            'value': solve.chal.value,
-            'time': utils.unix_time(solve.date)
-        })
+			'chal': solve.chalid,
+			'team': solve.teamid,
+			'value': solve.chal.value,
+			'time': utils.unix_time(solve.date)
+		})
 	for award in awards:
 		json['solves'].append({
 			'chal': None,
@@ -416,8 +465,90 @@ def team_solves(compid, teamid):
 	return jsonify(json)
 
 
+@competitions.route('/competitions/<int:compid>/solves')
+@competitions.route('/competitions/<int:compid>/solves/<int:teamid>')
+def solves(compid,teamid=None):
+	solves = None
+	awards = None
+	comp=Competitions.query.filter(Competitions.id==compid).first()
+	if comp is None:
+		abort(403)
+	if teamid is None:
+		if utils.is_admin():
+			solves = Solves.query.filter_by(teamid=session['id']).all()
+		elif utils.user_can_view_challenges():
+			if utils.authed():
+				chalids = [chal.chalid for chal in Chalcomp.query.filter(
+				Chalcomp.compid == compid)]
+				solves = Solves.query.join(Teams, Solves.teamid == Teams.id).filter(Solves.teamid == session['id'], Teams.banned == False,Solves.chalid.in_(chalids)).all()
+			else:
+				return jsonify({'solves': []})
+		else:
+			return redirect(url_for('auth.login', next='solves'))
+	else:
+		if utils.authed() and session['id'] == teamid:
+			solves = Solves.query.filter_by(teamid=teamid)
+			awards = Awards.query.filter_by(teamid=teamid)
+
+			freeze = utils.get_config('freeze')
+			if freeze:
+				freeze = utils.unix_time_to_utc(freeze)
+				if teamid != session.get('id'):
+					solves = solves.filter(Solves.date < freeze)
+					awards = awards.filter(Awards.date < freeze)
+			
+			chalids = [chal.chalid for chal in Chalcomp.query.filter(
+			Chalcomp.compid == compid)]
+			print chalids
+			solves=solves.filter(Solves.chalid.in_(chalids))
+			solves = solves.all()
+			awards = awards.all()
+		elif utils.hide_scores():
+			# Use empty values to hide scores
+			solves = []
+			awards = []
+		else:
+			solves = Solves.query.filter_by(teamid=teamid)
+			awards = Awards.query.filter_by(teamid=teamid)
+
+			freeze = utils.get_config('freeze')
+			if freeze:
+				freeze = utils.unix_time_to_utc(freeze)
+				if teamid != session.get('id'):
+					solves = solves.filter(Solves.date < freeze)
+					awards = awards.filter(Awards.date < freeze)
+			chalids = [chal.chalid for chal in Chalcomp.query.filter(
+				Chalcomp.compid == compid)]
+			print chalids
+			solves=solves.filter(Solves.chalid.in_(chalids))
+			solves = solves.all()
+			awards = awards.all()
+	db.session.close()
+	json = {'solves': []}
+	for solve in solves:
+		json['solves'].append({
+			'chal': solve.chal.name,
+			'chalid': solve.chalid,
+			'team': solve.teamid,
+			'value': solve.chal.value,
+			'category': solve.chal.category,
+			'time': utils.unix_time(solve.date)
+		})
+	if awards:
+		for award in awards:
+			json['solves'].append({
+				'chal': award.name,
+				'chalid': None,
+				'team': award.teamid,
+				'value': award.value,
+				'category': award.category or "Award",
+				'time': utils.unix_time(award.date)
+			})
+	json['solves'].sort(key=lambda k: k['time'])
+	return jsonify(json)
+
 def load(app):
 	register_plugin_assets_directory(
-            app, base_path='/plugins/competitions/assets/')
+			app, base_path='/plugins/competitions/assets/')
 	app.register_blueprint(competitions)
 	app.db.create_all()
