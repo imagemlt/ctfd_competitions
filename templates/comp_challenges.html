@@ -55,10 +55,10 @@
 {% endblock %}
 
 {% block scripts %}
-	<script src="{{ request.script_root }}/plugins/competitions/assets/utils.js"></script>
-	<script src="{{ request.script_root }}/plugins/competitions/assets/multi-modal.js"></script>
+	<script src="{{ request.script_root }}/plugins/competitions/assets/js/utils.js"></script>
+	<script src="{{ request.script_root }}/plugins/competitions/assets/js/multi-modal.js"></script>
 	{% if admin or not errors %}
-	<script src="{{ request.script_root }}/plugins/competitions/assets/chalboard.js"></script>
+	<script src="{{ request.script_root }}/plugins/competitions/assets/js/chalboard.js"></script>
 	{% endif %}
 	<script src="{{ request.script_root }}/plugins/competitions/assets/css/style.js"></script>
 {% endblock %}
