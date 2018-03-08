@@ -73,8 +73,13 @@
 					{% endif %}
 					{% endif %}
 					<li class="nav-item">
-						<a class="nav-link" href="{{ request.script_root }}/challenges">Challenges</a>
+						<a class="nav-link" href="{{ request.script_root }}/challenges">All Challenges</a>
 					</li>
+					{% if comp %}
+                                        <li class="nav-item">
+                                                <a class="nav-link" href="{{ request.script_root }}/competitions/{{ comp.id }}/challenges">Current Challenges</a>
+                                        </li>
+                                        {% endif %}
 				</ul>
 
 				<hr class="d-sm-flex d-md-flex d-lg-none">
