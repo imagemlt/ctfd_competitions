@@ -145,30 +145,44 @@ def comps(compid):
 		else:
 			abort(403)
 
-
-@competitions.route('/comps', methods=['GET'])
-def competitions_json():
+@competitions.route('/comps',defaults={'compid':None})
+@competitions.route('/comps/<int:compid>')
+def competitions_json(compid):
 	if not utils.is_admin():
 		if not utils.ctftime():
 			if utils.view_after_ctf():
 				pass
 			else:
 				abort(403)
-	competitions = Competitions.query.all()
-	json = {'competitions': []}
-	for x in competitions:
-		json['competitions'].append({
+	if compid is None:	
+		comps= Competitions.query.all()
+		json={'competitions':[]}
+		for x in comps:
+			json['competitions'].append({
+				'id': x.id,
+				'title': x.title,
+				'description': x.description,
+				'startTime': x.startTime,
+				'endTime': x.endTime,
+				'profile': x.profile
+				})
+		json['competitions'] = sorted(json['competitions'], key=lambda k: k['startTime'])
+		json['competitions'].reverse()
+		db.session.close()
+		return jsonify(json)
+	else:
+		x=Competitions.query.filter(Competitions.id==compid).first()
+		db.session.close()
+		if x is None:
+			abort(403)
+		return jsonify({
 			'id': x.id,
 			'title': x.title,
 			'description': x.description,
 			'startTime': x.startTime,
 			'endTime': x.endTime,
 			'profile': x.profile
-			})
-	json['competitions'] = sorted(json['competitions'], key=lambda k: k['startTime'])
-	json['competitions'].reverse()
-	db.session.close()
-	return jsonify(json)
+		})
 
 
 
@@ -223,7 +237,7 @@ def challenges_view(compid):
 			start=False
 		return render_template('comp_challenges.html', infos=infos, errors=errors, start=int(start), end=int(end),comp=comp)
 	else:
-		return redirect(url_for('auth.login', next='challenges'))
+		return redirect(url_for('auth.login', next=request.path))
 
 #@competitions.route('/competitions/<compid>', methods=['GET'])
 #def comp_chals(compid):
@@ -484,7 +498,7 @@ def solves(compid,teamid=None):
 			else:
 				return jsonify({'solves': []})
 		else:
-			return redirect(url_for('auth.login', next='solves'))
+			return redirect(url_for('auth.login', next=request.path))
 	else:
 		if utils.authed() and session['id'] == teamid:
 			solves = Solves.query.filter_by(teamid=teamid)

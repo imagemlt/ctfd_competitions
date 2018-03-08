@@ -1,0 +1,24 @@
+{% extends "_base.html" %} 
+{% block stylesheets %}
+<link href="https://cdn.bootcss.com/highlight.js/7.3/styles/tomorrow-night-eighties.css" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<script>var compid={{ comp.id }};</script>
+<div class="jumbotron">
+    <div class="container">
+        <h1>{{comp.title}}</h1>
+    </div>
+</div>
+<div class="content" style="margin:0 auto;width:70%;" id="content">
+
+
+</div>
+
+
+
+
+{% endblock %} {% block scripts %}
+<script src="https://cdn.bootcss.com/marked/0.3.17/marked.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="{{request.script_root}}/plugins/competitions/assets/js/comp.js"></script> {% endblock %}

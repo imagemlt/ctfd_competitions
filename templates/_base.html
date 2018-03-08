@@ -28,6 +28,11 @@
 		<script type="text/javascript">
 				var script_root = "{{ request.script_root }}";
 		</script>
+		<style>
+			img{
+				max-width: 100%;
+			}
+		</style>
 		
 </head>
 <body>
@@ -62,6 +67,9 @@
 							<a class="nav-link" href="{{ request.script_root }}/teams">Teams</a>
 						</li>
 					{% endif %} -->
+					<li class="nav-item">
+						<a class="nav-link" href="{{ request.script_root }}/competitions">Competitions</a>
+					</li>
 					{% if not hide_scores() %}
 						<li class="nav-item">
 							<a class="nav-link" href="{{ request.script_root }}/scoreboard">Total Scoreboard</a>
