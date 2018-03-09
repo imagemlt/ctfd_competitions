@@ -216,7 +216,7 @@ def challenges_view(compid):
 					errors.append('no such competition')
 					start=False
 				if comp.startTime>datetime.datetime.utcnow():
-					errors=append('{} 尚未开始，敬请期待'.format(comp.titile))
+					errors=append('{} 尚未开始，敬请期待'.format(comp.title))
 					start=False
 				return render_template('comp_challenges.html', infos=infos, errors=errors, start=int(start), end=int(end),comp=comp)
 
@@ -234,7 +234,7 @@ def challenges_view(compid):
 			errors.append('no such competition')
 			start=False
 		if comp.startTime>datetime.datetime.utcnow():
-			errors.append('{} 尚未开始，敬请期待'.format(comp.titile))
+			errors.append('{} 尚未开始，敬请期待'.format(comp.title))
 			start=False
 		return render_template('comp_challenges.html', infos=infos, errors=errors, start=int(start), end=int(end),comp=comp)
 	else:
@@ -328,11 +328,11 @@ def comp_challenges(compid):
 		abort(403)
 
 
-@competitions.route('/competitions/add', methods=['GET'])
+@competitions.route('/admin/competitions/add', methods=['GET','POST'])
 @admins_only
 def addComp():
 	if request.method == 'GET':
-		return render_template('newComptition.html')
+		return render_template('add_comp.html')
 	elif request.method == 'POST':
 		title = request.form.get('title')
 		description = request.form.get('description')
@@ -340,14 +340,52 @@ def addComp():
 		endTime = request.form.get('endTime')
 		profile = request.form.get('profile')
 		comp = Competitions(title, description)
-		comp.startTime = startTime
-		comp.endTime = endTime
+		comp.startTime = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S')
+		comp.endTime = datetime.datetime.strptime(endTime, '%Y-%m-%d %H:%M:%S')
 		comp.profile = profile
 		db.session.add(comp)
-		sb.session.flush()
+		db.session.flush()
 		db.session.commit()
 		return redirect('/admin/competitions')
 
+@competitions.route('/admin/competitions/<int:compid>/del',methods=['DELETE'])
+@admins_only
+def del_comp(compid):
+	try:
+		comp=Competitions.query.filter(Competitions.id==compid).first()
+		db.session.delete(comp)
+		chalcomps=Chalcomp.query.filter(Chalcomp.compid==compid).all()
+		for x in chalcomps:
+			x.compid=1
+		db.session.commit()
+		return jsonify({'res':'success'})
+	except Exception,e:
+		return jsonify({'res':'fail'})
+		
+
+@competitions.route('/admin/competitions/<int:compid>/edit',methods=['GET','POST'])
+@admins_only
+def editcomp(compid):
+	comp=Competitions.query.filter(Competitions.id==compid).first()
+	if comp is None:
+		abort(403)
+	if(request.method=='GET'):
+		return render_template('/add_comp.html',comp=comp)
+	else:
+		title = request.form.get('title')
+		description = request.form.get('description')
+		startTime = request.form.get('startTime')
+		endTime = request.form.get('endTime')
+		profile = request.form.get('profile')
+		comp.title = title
+		comp.description = description
+		comp.startTime = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S')
+		comp.endTime = datetime.datetime.strptime(endTime, '%Y-%m-%d %H:%M:%S')
+		comp.profile = profile
+		db.session.commit()
+		return redirect('/admin/competitions')
+		
+		
 
 @competitions.route('/competitions/<int:compid>/scores')
 def scores(compid):
@@ -556,6 +594,76 @@ def solves(compid,teamid=None):
 			})
 	json['solves'].sort(key=lambda k: k['time'])
 	return jsonify(json)
+
+@competitions.route('/admin/competitions/<int:compid>/chals', methods=['POST', 'GET'])
+@admins_only
+def admin_chals(compid):
+	comp=Competitions.query.filter(Competitions.id==compid).first()
+	if not comp:
+		abort(403)
+	if request.method == 'POST':
+		chalids=[x.chalid for x in Chalcomp.query.filter(Chalcomp.compid==compid).all()]
+		chals = Challenges.query.filter(Challenges.id.in_(chalids)).order_by(Challenges.value).all()
+
+		json_data = {'game': []}
+		for chal in chals:
+			tags = [tag.tag for tag in Tags.query.add_columns('tag').filter_by(chal=chal.id).all()]
+			files = [str(f.location) for f in Files.query.filter_by(chal=chal.id).all()]
+			hints = []
+			for hint in Hints.query.filter_by(chal=chal.id).all():
+				hints.append({'id': hint.id, 'cost': hint.cost, 'hint': hint.hint})
+
+			type_class = CHALLENGE_CLASSES.get(chal.type)
+			type_name = type_class.name if type_class else None
+
+			json_data['game'].append({
+				'id': chal.id,
+				'name': chal.name,
+				'value': chal.value,
+				'description': chal.description,
+				'category': chal.category,
+				'files': files,
+				'tags': tags,
+				'hints': hints,
+				'hidden': chal.hidden,
+				'max_attempts': chal.max_attempts,
+				'type': chal.type,
+				'type_name': type_name,
+				'type_data': {
+					'id': type_class.id,
+					'name': type_class.name,
+					'templates': type_class.templates,
+					'scripts': type_class.scripts,
+				}
+			})
+
+		db.session.close()
+		return jsonify(json_data)
+	else:
+		chalids=[x.chalid for x in Chalcomp.query.filter(Chalcomp.compid==compid).all()]
+		challenges = Challenges.query.filter(Challenges.id.in_(chalids)).all()
+		return render_template('admin_chals.html', challenges=challenges,comp=comp)
+
+@competitions.route('/admin/competitions/<int:compid>/chal/new', methods=['GET', 'POST'])
+@admins_only
+def admin_create_chal(compid):
+	comp=Competitions.query.filter(Competitions.id==compid).first()
+	if not comp:
+		abort(403)
+	if request.method == 'POST':
+		chal_type = request.form['chaltype']
+		chal_class = get_chal_class(chal_type)
+		chal_class.create(request)
+		chalid=db.session.query(db.func.max(Challenges.id)).one()[0]
+		chalcomp=Chalcomp()
+		chalcomp.chalid=chalid
+		chalcomp.compid=compid
+		db.session.add(chalcomp)
+		db.session.commit()
+		db.session.flush()
+		return redirect('/admin/competitions/'+str(compid)+'/chals')
+	else:
+		return render_template('add_chals.html',comp=comp)
 
 def load(app):
 	register_plugin_assets_directory(

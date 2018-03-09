@@ -1,0 +1,151 @@
+{% extends "base.html" %} {% block stylesheets %} {% endblock %} {%block content%}
+<script>var compid={% if not  comp %}NaN;{% else %}{{comp.id}}{%endif%}</script>
+<div class="jumbotron">
+    <div class="container">
+        <h1>{% if comp %}Edit Competition {{comp.title}}{% else %}Add a new Competition{% endif %}</h1>
+    </div>
+</div>
+<div class="container">
+
+    <div class="col-xs-12" id="content" 　style="text-align:left;padding:0 auto;">
+        <form method="POST" action=""　style="width:100%;display:inline-block;">
+            <input name="nonce" value="{{ nonce }}"
+                type="hidden">
+
+            <div class="form-group">
+                <label for="title">title
+                    <svg class="svg-inline--fa fa-question-circle fa-w-16 text-muted cursor-help" data-toggle="tooltip" data-placement="right"
+                        title="" aria-labelledby="svg-inline--fa-title-1" data-fa-processed="" data-prefix="far" data-icon="question-circle"
+                        role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-original-title="The name of your challenge">
+                        <title id="svg-inline--fa-title-1">The title of your challenge</title>
+                        <path fill="currentColor" d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path>
+                    </svg>
+                    <!-- <i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right" title="The name of your challenge"></i> -->
+                </label>
+                <input id='title' class="form-control" name="title" placeholder="Enter challenge name" type="text" value="">
+            </div>
+            
+
+            <ul class="nav nav-tabs" role="tablist" id="desc-edit">
+                <li class="nav-item">
+                    <a class="nav-link active show" href="#desc-write" id="desc-write-link" aria-controls="home" role="tab" data-toggle="tab"
+                        aria-selected="true">
+                        Write
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#desc-preview" aria-controls="home" role="tab" data-toggle="tab" aria-selected="false">
+                        Preview
+                    </a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane active show" id="desc-write">
+                    <div class="form-group">
+                        <label for="message-text" class="control-label">Message:
+                            <svg class="svg-inline--fa fa-question-circle fa-w-16 text-muted cursor-help" data-toggle="tooltip" data-placement="right"
+                                title="" aria-labelledby="svg-inline--fa-title-3" data-fa-processed="" data-prefix="far" data-icon="question-circle"
+                                role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-original-title="Use this to give a brief introduction to your challenge. The description supports HTML and Markdown.">
+                                <title id="svg-inline--fa-title-3">Use this to give a brief introduction to your challenge. The description supports HTML and
+                                    Markdown.</title>
+                                <path fill="currentColor" d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path>
+                            </svg>
+                            <!-- <i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right" title="Use this to give a brief introduction to your challenge. The description supports HTML and Markdown."></i> -->
+                        </label>
+                        <textarea id="desc-editor" class="form-control" name="description" rows="10"></textarea>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane content" id="desc-preview" style="height:214px; overflow-y: scroll;">
+                    
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="profile">profile
+                    <svg class="svg-inline--fa fa-question-circle fa-w-16 text-muted cursor-help" data-toggle="tooltip" data-placement="right"
+                        title="" aria-labelledby="svg-inline--fa-title-4" data-fa-processed="" data-prefix="far" data-icon="question-circle"
+                        role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-original-title="This is how many points teams will receive once they solve this challenge.">
+                        <title id="svg-inline--fa-title-4">This is how many points teams will receive once they solve this challenge.</title>
+                        <path fill="currentColor"
+                            d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path>
+                    </svg>
+                    <!-- <i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right" title="This is how many points teams will receive once they solve this challenge."></i> -->
+                </label>
+                <input class="form-control" name="profile" placeholder="Enter value" id="profile" required="">
+            </div>
+            <div class="form-group">
+                <label for="startTime">startTime
+                    <svg class="svg-inline--fa fa-question-circle fa-w-16 text-muted cursor-help" data-toggle="tooltip" data-placement="right"
+                        title="" aria-labelledby="svg-inline--fa-title-4" data-fa-processed="" data-prefix="far" data-icon="question-circle"
+                        role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-original-title="This is how many points teams will receive once they solve this challenge.">
+                        <title id="svg-inline--fa-title-4">This is how many points teams will receive once they solve this challenge.</title>
+                        <path fill="currentColor"
+                            d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path>
+                    </svg>
+                    <!-- <i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right" title="This is how many points teams will receive once they solve this challenge."></i> -->
+                </label>
+                <input class="form-control" name="startTime" placeholder="Enter value" id="startTime" required="">
+            </div>
+
+            <div class="form-group">
+                <label for="endTime">profile
+                    <svg class="svg-inline--fa fa-question-circle fa-w-16 text-muted cursor-help" data-toggle="tooltip" data-placement="right"
+                        title="" aria-labelledby="svg-inline--fa-title-4" data-fa-processed="" data-prefix="far" data-icon="question-circle"
+                        role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-original-title="This is how many points teams will receive once they solve this challenge.">
+                        <title id="svg-inline--fa-title-4">This is how many points teams will receive once they solve this challenge.</title>
+                        <path fill="currentColor"
+                            d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path>
+                    </svg>
+                    <!-- <i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right" title="This is how many points teams will receive once they solve this challenge."></i> -->
+                </label>
+                <input class="form-control" name="endTime" placeholder="Enter value"  id="endTime" required="">
+            </div>
+
+
+            
+            <input value="{{ nonce }}"
+                name="nonce" id="nonce" type="hidden">
+            <div style="text-align:center">
+                <button class="btn btn-success btn-outlined" type="submit">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %} {% block scripts %} 
+<script src="https://cdn.bootcss.com/marked/0.3.17/marked.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script>
+
+    var rendererMD = new marked.Renderer();
+    marked.setOptions({
+      renderer: rendererMD,
+      gfm: true,
+      tables: true,
+      breaks: false,
+      pedantic: false,
+      sanitize: false,
+      smartLists: true,
+      smartypants: false
+    });
+    marked.setOptions({
+        highlight: function (code) {
+        return hljs.highlightAuto(code).value;
+      }
+    });
+$('#desc-editor').bind('propertychange input',function(){
+    $('#desc-preview').html(marked($(this).val()));
+    console.log($(this).val());
+})
+if(compid!=NaN){
+        $.getJSON(script_root+'/comps/'+compid,function(res){
+            $('#title').val(res.title);  
+            $('#desc-editor').val(res.description);
+            $('#profile').val(res.profile);
+            $('#startTime').val(res.startTime);
+            $('#endTime').val(res.endTime);
+})
+    }
+</script>
+{% endblock %}
