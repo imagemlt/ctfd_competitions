@@ -189,7 +189,8 @@ def competitions_json(compid):
 @competitions.route('/admin/competitions', methods=['GET'])
 @admins_only
 def admin_competitions():
-		return render_template('admin_competitions.html')
+		comp=Competitions.query.all()
+		return render_template('admin_competitions.html',comp=comp)
 
 @competitions.route('/competitions/<int:compid>/challenges', methods=['GET'])
 def challenges_view(compid):
@@ -327,17 +328,12 @@ def comp_challenges(compid):
 		abort(403)
 
 
-@competitions.route('/addComp', methods=['GET'])
+@competitions.route('/competitions/add', methods=['GET'])
 @admins_only
 def addComp():
 	if request.method == 'GET':
 		return render_template('newComptition.html')
-
-
-@competitions.route('/admin/addComp', methods=['POST'])
-@admins_only
-def add_comp():
-	if request.method == 'POST':
+	elif request.method == 'POST':
 		title = request.form.get('title')
 		description = request.form.get('description')
 		startTime = request.form.get('startTime')

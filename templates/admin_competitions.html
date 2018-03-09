@@ -1,1 +1,42 @@
-<h1>cin</h1>
+{% extends "_base.html" %} 
+{% block content %}
+<div class="jumbotron">
+	<div class="container">
+		<h1>Competitions</h1>
+	</div>
+</div>
+<div class="container">
+
+    <div class="row" id="content"　style="text-align:center">
+        {% if not comp %}
+        <div class="loading" style="width:100%;margin-top:300px;color:grey;text-align:center"><h1>No Competitions yet</h1><a href="{{script_root}}/competitions/add">Add new Comp</a></div>
+    {% else %}
+    {% for item in comp %}
+    <div class="col-md-4 col-xs-10 col-xs-offset-1" style="margin-bottom:10px;">
+            <div class="" style="border:1px solid grey;">
+                <div class="" style="width:100%;text-align:center;">
+                    <img src="{{request.script_root}}/plugins/competitions/assets/pics/{{item.profile}}" style="width:100%;height:200px;" />
+                </div>
+                <div class="col-md-12" style="padding:10px 10px;height:180px;">
+                    <div class="compettime" style="font-size:12px;color:grey">{{item.startTime}}</div>
+                    <div class="competname" style="font-size:22px;width:98%;text-align:center;margin-bottom:5px;margin-top:5px;">{{item.title}}</div>
+                    <div class="btn-group" style="position:absolute;bottom:10px;right:2%;">
+                        <a class="btn btn-info" href="{{ request.script_root }}/competitions/{{ item.id }}" style="border-radius:20px;margin:0 2px;">详情</a>
+                        <a class="btn btn-success" style="border-radius:20px;margin:0 2px;" href="{{ request.script_root }}/competitions/{{ item.id }}/edit">修改</a>
+                        <button class="btn btn-danger" style="border-radius:20px;margin:0 2px">删除</button>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    {% endif %}    </div>
+
+</div>
+
+<a href="{{request.script_root}}/competitions/add"  class=".hidden-xs" style="position:fixed;right:2em;bottom:2em;display:block;width:10%;height:10%;text-align:right;"><svg t="1520573351483" class="icon" style="width:100%;height:100%;display:inline-block;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1048" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M512 0C229.2224 0 0 229.2224 0 512s229.2224 512 512 512 512-229.2224 512-512S794.7776 0 512 0z m202.973867 546.133333H580.266667a34.133333 34.133333 0 0 0-34.133334 34.133334v134.7072c0 16.9984-11.6224 32.768-28.398933 35.498666A34.1504 34.1504 0 0 1 477.866667 716.8v-136.533333a34.133333 34.133333 0 0 0-34.133334-34.133334h-134.7072c-16.9984 0-32.768-11.6224-35.498666-28.398933A34.1504 34.1504 0 0 1 307.2 477.866667h136.533333a34.133333 34.133333 0 0 0 34.133334-34.133334v-134.7072c0-16.9984 11.6224-32.768 28.398933-35.498666A34.184533 34.184533 0 0 1 546.133333 307.2v136.533333a34.133333 34.133333 0 0 0 34.133334 34.133334h136.533333a34.1504 34.1504 0 0 1 33.672533 39.867733c-2.747733 16.7936-18.500267 28.398933-35.498666 28.398933z" fill="#1296db" p-id="1049"></path></svg></a>
+
+
+{% endblock %}
+{% block scripts %}
+{% endblock %}
