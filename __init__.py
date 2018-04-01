@@ -651,19 +651,29 @@ def admin_create_chal(compid):
 	if not comp:
 		abort(403)
 	if request.method == 'POST':
-		chal_type = request.form['chaltype']
-		chal_class = get_chal_class(chal_type)
-		chal_class.create(request)
-		chalid=db.session.query(db.func.max(Challenges.id)).one()[0]
-		chalcomp=Chalcomp()
-		chalcomp.chalid=chalid
-		chalcomp.compid=compid
-		db.session.add(chalcomp)
-		db.session.commit()
+		for x in request.values.getlist('chals'):
+			chalcomp=Chalcomp()
+			chalcomp.chalid=x
+			chalcomp.compid=compid
+			db.session.add(chalcomp)
+			db.session.commit()
 		db.session.flush()
+		#chal_type = request.form['chaltype']
+		#chal_class = get_chal_class(chal_type)
+		#chal_class.create(request)
+		#chalid=db.session.query(db.func.max(Challenges.id)).one()[0]
+		#chalcomp=Chalcomp()
+		#chalcomp.chalid=chalid
+		#chalcomp.compid=compid
+		#db.session.add(chalcomp)
+		#db.session.commit()
+		#db.session.flush()
 		return redirect('/admin/competitions/'+str(compid)+'/chals')
 	else:
-		return render_template('add_chals.html',comp=comp)
+		chalcomps=Chalcomp.query.all()
+		oldlist=[x.chalid for x in chalcomps]
+		newchals=Challenges.query.filter(~Challenges.id.in_(oldlist)).all()
+		return render_template('add_chals.html',comp=comp,chals=newchals)
 
 def load(app):
 	register_plugin_assets_directory(
