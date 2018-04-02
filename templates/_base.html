@@ -71,19 +71,13 @@
 						<a class="nav-link" href="{{ request.script_root }}/competitions">Competitions</a>
 					</li>
 					{% if not hide_scores() %}
-						<li class="nav-item">
-							<a class="nav-link" href="{{ request.script_root }}/scoreboard">Total Scoreboard</a>
-						</li>
-					{% if comp %}
+					{% if comp  and comp.id %}
 					<li class="nav-item">
 						<a class="nav-link" href="{{ request.script_root }}/competitions/{{ comp.id }}/scoreboard">Current Scoreboard</a>
 					</li>
 					{% endif %}
 					{% endif %}
-					<li class="nav-item">
-						<a class="nav-link" href="{{ request.script_root }}/challenges">All Challenges</a>
-					</li>
-					{% if comp %}
+					{% if comp and comp.id %}
                                         <li class="nav-item">
                                                 <a class="nav-link" href="{{ request.script_root }}/competitions/{{ comp.id }}/challenges">Current Challenges</a>
                                         </li>

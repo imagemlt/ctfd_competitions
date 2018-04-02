@@ -38,6 +38,7 @@ class Chalcomp(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	chalid = db.Column(db.Integer, db.ForeignKey('challenges.id'))
 	compid = db.Column(db.Integer, db.ForeignKey('competitions.id'))
+	chal=db.relationship('Challenges',backref=db.backref('chalcomp'))
 
 
 
@@ -64,6 +65,8 @@ def get_range(comp, admin=False, count=None, teamid=None):
 	"""
 	freeze = utils.get_config('freeze')
 	chals = [x.chalid for x in Comp.chals]
+	awardTitles=[u"Hint for {}".format(x.chal.name) for x in Comp.chals]
+	print awardTitles 
 	if not admin and freeze:
 		scores = scores.filter(Solves.date < utils.unix_time_to_utc(freeze))
 		awards = awards.filter(Awards.date < utils.unix_time_to_utc(freeze))
@@ -73,6 +76,9 @@ def get_range(comp, admin=False, count=None, teamid=None):
 	scores = scores.filter(Chalcomp.compid == Comp.id)
 	scores = scores.filter(Solves.date < Comp.endTime)
 	scores = scores.filter(Solves.date > Comp.startTime)
+	awards = awards.filter(Awards.date < Comp.endTime)
+        awards = awards.filter(Awards.date > Comp.startTime)
+	awards = awards.filter(Awards.name.in_(awardTitles))
 	#awards=scores.filter(Solves.chalid in chals)
 	results = union_all(scores, awards).alias('results')
 	if(teamid is not None):
@@ -137,7 +143,8 @@ def comps(compid):
 			else:
 				abort(403)
 	if compid is None:
-		return render_template('competitions.html')
+		comp=Competitions.query.all()
+		return render_template('competitions.html',comp=comp)
 	else:
 		comp=Competitions.query.filter(Competitions.id==compid).one()
 		if comp:
