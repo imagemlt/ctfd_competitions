@@ -8,7 +8,7 @@
 <div class="container">
 
     <div class="col-xs-12" id="content" 　style="text-align:left;padding:0 auto;">
-        <form method="POST" action=""　style="width:100%;display:inline-block;">
+        <form method="POST" action=""　style="width:100%;display:inline-block;" enctype="multipart/form-data">
             <input name="nonce" value="{{ nonce }}"
                 type="hidden">
 
@@ -71,7 +71,7 @@
                     </svg>
                     <!-- <i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right" title="This is how many points teams will receive once they solve this challenge."></i> -->
                 </label>
-                <input class="form-control" name="profile" placeholder="Enter value" id="profile" required="">
+                <input class="form-control" name="profile" placeholder="Enter value" id="profile" required="" type="file">
             </div>
             <div class="form-group">
                 <label for="startTime">startTime
@@ -88,7 +88,7 @@
             </div>
 
             <div class="form-group">
-                <label for="endTime">profile
+                <label for="endTime">endTime
                     <svg class="svg-inline--fa fa-question-circle fa-w-16 text-muted cursor-help" data-toggle="tooltip" data-placement="right"
                         title="" aria-labelledby="svg-inline--fa-title-4" data-fa-processed="" data-prefix="far" data-icon="question-circle"
                         role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-original-title="This is how many points teams will receive once they solve this challenge.">

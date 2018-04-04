@@ -4,6 +4,7 @@ from flask import render_template, request, redirect, jsonify, url_for, session,
 from CTFd.models import db, Challenges, Files, Solves, WrongKeys, Keys, Tags, Teams, Awards, Hints, Unlocks
 
 from CTFd.utils import admins_only, is_admin
+from werkzeug.utils import secure_filename
 
 from sqlalchemy.sql.expression import union_all
 from CTFd import utils
@@ -13,6 +14,7 @@ from CTFd.plugins import register_plugin_assets_directory
 from CTFd.plugins.challenges import get_chal_class
 
 import datetime
+import os
 
 
 competitions = Blueprint('competitions', __name__,
@@ -247,28 +249,6 @@ def challenges_view(compid):
 	else:
 		return redirect(url_for('auth.login', next=request.path))
 
-#@competitions.route('/competitions/<compid>', methods=['GET'])
-#def comp_chals(compid):
-#	if not utils.is_admin():
-#		if not utils.ctftime():
-#			if utils.view_after_ctf():
-#				pass
-#			else:
-#				abort(403)
-#	if utils.get_config('verify_emails'):
-#		if utils.authed():
-#			if utils.is_admin() is False and utils.is_verified() is False:  # User is not confirmed
-#				abort(403)
-#	if utils.user_can_view_challenges() and (utils.ctf_started() or utils.is_admin()):
-#		teamid = session.get('id')
-#		comp = Competitions.query.filter(Competitions.id == compid).first()
-#		if comp is None:
-#			abort(403)
-#		if comp.startTime>datetime.datetime.utcnow():
-#			abort(403)
-#		return render_template('competition.html', competition=comp)
-#	else:
-#		abort(403)
 
 
 @competitions.route('/competitions/<int:compid>/chals', methods=['GET'])
@@ -345,7 +325,12 @@ def addComp():
 		description = request.form.get('description')
 		startTime = request.form.get('startTime')
 		endTime = request.form.get('endTime')
-		profile = request.form.get('profile')
+		pic=request.files['profile']
+		picdir=os.path.dirname(__file__)+"/assets/pics/"+secure_filename(pic.filename)
+		pic.save(picdir)
+		profile=secure_filename(pic.filename)
+		print picdir
+		print picdir
 		comp = Competitions(title, description)
 		comp.startTime = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S')
 		comp.endTime = datetime.datetime.strptime(endTime, '%Y-%m-%d %H:%M:%S')
@@ -354,6 +339,10 @@ def addComp():
 		db.session.flush()
 		db.session.commit()
 		return redirect('/admin/competitions')
+
+@competitions.route('/test')
+def test1():
+	return os.path.dirname(__file__)
 
 @competitions.route('/admin/competitions/<int:compid>/del',methods=['DELETE'])
 @admins_only
@@ -383,7 +372,12 @@ def editcomp(compid):
 		description = request.form.get('description')
 		startTime = request.form.get('startTime')
 		endTime = request.form.get('endTime')
-		profile = request.form.get('profile')
+		pic=request.files['profile']
+		picdir=os.path.dirname(__file__)+"/assets/pics/"+secure_filename(pic.filename)
+		pic.save(picdir)
+		profile=secure_filename(pic.filename)
+		print picdir
+		print picdir
 		comp.title = title
 		comp.description = description
 		comp.startTime = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S')
@@ -478,6 +472,18 @@ def comp_scoreboard(compid):
 	standings = get_range(comp=compid)
 	return render_template('compet_scoreboard.html', teams=standings, score_frozen=utils.is_scoreboard_frozen(),comp=comp)
 
+@competitions.route('/admin/competitions/<int:compid>/chal/delete',methods=['POST'])
+@admins_only
+def remove_chal(compid):
+	chal=Chalcomp().query.filter(Chalcomp.compid==compid).filter(Chalcomp.chalid==request.form['id']).one()
+	print "queried"
+	if not chal:
+		abort(403)
+	else:
+		db.session.delete(chal)
+		db.session.commit()
+		db.session.close()
+		return '1'
 
 
 @competitions.route('/competitions/<int:compid>/chalboard/solves/<int:teamid>')
